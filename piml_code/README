@@ -1,0 +1,17 @@
+This project utilizes a graph-based neural network for predicting strain and stress in layered materials. The approach involves data preprocessing, dataset generation, graph formation, and training deep learning models to analyze material behavior.
+
+The project contains the following key files:
+
+main.py - The main script to train and evaluate the model.
+data_preprocessing.py - Handles filtering and preprocessing of material data.
+dataset_generation.py - Generates synthetic datasets for training and validation.
+graph_formation.py - Constructs graph-based representations of data.
+train_nn.py - Trains a neural network for stress and strain prediction.
+training.py - Contains the training loop for graph-based learning.
+eval_strain.py - Evaluates the performance of the model using various metrics.
+model.py - Defines the architecture of the Graph Convolutional Network (GCN) and Graph Attention Network (GAT).
+
+To train the model
+python main.py --mode train --predict predict_strain --frame_large_path  <Add path to train dataframe> --section_path <add path to the section path> --model_type GAT --lr 0.01 --epochs  --optimizer Adam  --criterion L1loss --log_dir 
+
+
