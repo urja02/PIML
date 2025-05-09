@@ -7,7 +7,7 @@ import pickle
 from dataset_generation import generatesection, plot_sample_query_points,generate_query_points,analysis
 from data_preprocessing import frame_filtering,  filtering_ZS, train_val_test_generate, formation_of_matrices,remove_strain_z
 from graphs_formation import train_graph, val_graph, test_graph
-from training import training_loop
+from scripts.train_GNN import training_loop
 from model import GCN, GCNWithMLP, GAT
 from eval import evaluation
 from eval_strain import evaluation_strain
