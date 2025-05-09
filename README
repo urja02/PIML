@@ -11,7 +11,22 @@ train_GNN.py - Contains the training loop for graph-based learning.
 eval_strain.py - Evaluates the performance of the model using various metrics.
 model.py - Defines the architecture of the Graph Convolutional Network (GCN) and Graph Attention Network (GAT).
 
+
+Installation:
+Clone the repository:
+git clone https://github.com/urja02/PIML.git
+cd PIML
+Create and activate a virtual environment 
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+Install the required packages:
+pip install -r requirements.txt
+
 To train the model
 python main.py --mode train --predict predict_strain --frame_large_path  <Add path to train dataframe> --section_path <add path to the section path> --model_type GAT --lr 0.01 --epochs  --optimizer Adam  --criterion L1loss --log_dir 
 
+Evaluating the model:
+Run the jupyter notebook
 
+To access the dataset use the following 
+https://drive.google.com/drive/u/1/folders/1T2EYd7iKodO1UYzjE3eJXYsuqATpXhM-
