@@ -7,7 +7,7 @@ data_preprocessing.py - Handles filtering and preprocessing of material data.
 dataset_generation.py - Generates synthetic datasets for training and validation.
 graph_formation.py - Constructs graph-based representations of data.
 train_nn.py - Trains a neural network for stress and strain prediction.
-training.py - Contains the training loop for graph-based learning.
+train_GNN.py - Contains the training loop for graph-based learning.
 eval_strain.py - Evaluates the performance of the model using various metrics.
 model.py - Defines the architecture of the Graph Convolutional Network (GCN) and Graph Attention Network (GAT).
 
