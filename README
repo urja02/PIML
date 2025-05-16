@@ -23,7 +23,13 @@ Install the required packages:
 pip install -r requirements.txt
 
 To train the model
-python main.py --mode train --predict predict_strain --frame_large_path  <Add path to train dataframe> --section_path <add path to the section path> --model_type GAT --lr 0.01 --epochs  --optimizer Adam  --criterion L1loss --log_dir 
+
+Download the frame_large_path dataset from https://drive.google.com/file/d/1jdqzxtWYaD6kauOPkwVkGCuL7iV14o_8/view?usp=drive_link and copy it to the data folder (PIML/training/data).
+
+Download the section_path dataset from https://drive.google.com/file/d/1A0mF4MpVF0N1zlPWxg8BFn4LPhnoTJnk/view?usp=drive_link and copy it to the data folder (PIML/training/data).
+
+Clone https://github.com/egemenokte/3DLayeredElastic.git into the PIML/training/ and rename it to LayeredElastic (PIML/training/LayeredElastic)
+python main.py --mode train --predict predict_strain --frame_large_path  <Add path to frame_large_path dataset> --section_path <add path to the section_path dataset> --model_type GAT --lr 0.01 --epochs  --optimizer Adam  --criterion L1loss --log_dir 
 
 Evaluating the model:
 Run the jupyter notebook

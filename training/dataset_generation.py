@@ -35,7 +35,7 @@ def fewpoints(x,y,z,RSO,download):
         counter=counter+1
   if download:
     DF.to_excel("PLEA.xlsx")
-    files.download('PLEA.xlsx')
+    # files.download('PLEA.xlsx')
   return DF
 
 # for i in range(10):

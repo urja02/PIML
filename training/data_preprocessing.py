@@ -7,9 +7,6 @@ from sklearn.preprocessing import PowerTransformer
 
 def frame_filtering(filter,FrameLarge):
     Frame_filtered = pd.DataFrame()
-
-    
-
     for structure in FrameLarge['Structure'].unique():
         frame = FrameLarge[FrameLarge['Structure']==structure]
         if (frame.Stress_Z[frame.r<0.51]-filter<0).any():
@@ -43,11 +40,7 @@ def filtering_ZS(ZS,xs,Frame_filtered):
 
     # normalizing
     ZS_new=[ele/20 for ele in ZS_new]
-    
     xs=[ele/10 for ele in xs]
-
-    
-    
     return ZS_new,xs
 """total inputs and targets
 
@@ -64,9 +57,8 @@ def remove_strain_z(DF):
     for structure in Length:
         struct = int(structure) - 1
         filtered = DF[DF["Structure"] == structure]
-
         inp = filtered.loc[:, ["Strain_Z"]] * 1e6
-
+   
         # Check if any Strain_Z value is greater than 2000
         if (inp['Strain_Z'] >=1500).any():
             DF = DF[DF["Structure"] != structure]
@@ -77,16 +69,10 @@ def remove_strain_z(DF):
     # normalizing
     ZS_new=[ele/20 for ele in ZS_new]
     # xs=[ele/10 for ele in xs]
-     
-    
     return ZS_new,DF
         
 def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,N,final_dict_ztoH,final_dict_ztonu):
-    print("df")
-    print(DF["Structure"].nunique())
     Length= DF["Structure"].unique()
-
-
     train_length= Length[:split_idx]
     val_length = Length[split_idx:test_idx]
     test_length = Length[test_idx:N]
@@ -99,113 +85,74 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
     VAL_out=[]
     TEST=[]
     TEST_out=[]
-    
+
     # creating input matrix for training
     for structure in train_length:
         struct = int(structure)-1
         filtered=DF[DF["Structure"]==structure]
-
         inp=filtered.loc[:,["z","r"]].copy()
-
 
         for idx,col in inp.iterrows():
             z_val = col['z']
-
-            if z_val in final_dict_ztoE[struct]:
-               
+            if z_val in final_dict_ztoE[struct]: 
                 inp.loc[idx,"E"]=final_dict_ztoE[struct][z_val]
             if z_val in final_dict_ztoH[struct]:
                 inp.loc[idx,"H"]=final_dict_ztoH[struct][z_val]
             if z_val in final_dict_ztonu[struct]:
                 inp.loc[idx,"nu"]=final_dict_ztonu[struct][z_val]
-            
-
-
 
         inp['z'] = inp['z'] / 20
         inp['r'] = inp['r'] / 10
         total_inputs = inp.values
         TRAIN.append(total_inputs)
-        
-
         out = filtered[['Strain_Z','Strain_R','Strain_T']]*1e6
-        
-        
         total_targets=out.values
-
         TRAIN_out.append(total_targets)
-    
     
     TRAIN_out_com = np.concatenate(TRAIN_out)
     maxs_train = TRAIN_out_com.max(axis=0)
     mins_train = TRAIN_out_com.min(axis=0)
-
     TRAIN_out_scaled = (TRAIN_out_com-mins_train)/(maxs_train-mins_train)
-
-
-
     # Original lengths of the arrays in TEST_out
     lengths = [arr.shape[0] for arr in TRAIN_out]
-
     # Split the scaled array back into the original list structure
     TRAIN_out_scaled = split_array(TRAIN_out_scaled, lengths)
-   
-   
-#creating input matrix for validation
-   
-   
+
     for structure in val_length:
         struct = int(structure)-1
         filtered=DF[DF["Structure"]==structure]
-
         inp=filtered.loc[:,["z","r"]].copy()
 
-
         for idx,col in inp.iterrows():
-
             z_val = col['z']
-
             if z_val in final_dict_ztoE[struct]:
                 inp.loc[idx,"E"]=final_dict_ztoE[struct][z_val]
-            
             if z_val in final_dict_ztoH[struct]:
                 inp.loc[idx,"H"]=final_dict_ztoH[struct][z_val]
-            
             if z_val in final_dict_ztonu[struct]:
                 inp.loc[idx,"nu"]=final_dict_ztonu[struct][z_val]
             
-            
-
         inp['z'] = inp['z'] / 20
         inp['r'] = inp['r'] / 10
         total_inputs = inp.values
         VAL.append(total_inputs)
-        # print(inputs)
 
         out = filtered[['Strain_Z','Strain_R','Strain_T']]*1e6
-        
         total_targets=out.values
         VAL_out.append(total_targets)
     VAL_out_com = np.concatenate(VAL_out)
-    maxs_val = VAL_out_com.max(axis=0)
-    mins_val = VAL_out_com.min(axis=0)
-
     VAL_out_scaled = (VAL_out_com-mins_train)/(maxs_train-mins_train)
-        # Original lengths of the arrays in TEST_out
+    # Original lengths of the arrays in TEST_out
     lengths = [arr.shape[0] for arr in VAL_out]
-
     # Split the scaled array back into the original list structure
     VAL_out_scaled = split_array(VAL_out_scaled, lengths)
-#creating input matrix for validation
-
+    #creating input matrix for validation
     for structure in test_length:
         struct = int(structure)-1
         filtered=DF[DF["Structure"]==structure]
-
         inp=filtered.loc[:,["z","r"]].copy()
 
         for idx,col in inp.iterrows():
-
             z_val = col['z']
 
             if z_val in final_dict_ztoE[struct]:
@@ -216,32 +163,18 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
             
             if z_val in final_dict_ztonu[struct]:
                 inp.loc[idx,"nu"]=final_dict_ztonu[struct][z_val]
-            
-            
-
 
         total_inputs = inp.values
         TEST.append(total_inputs)
-        # print(inputs)
-
         out = filtered[['Strain_Z','Strain_R','Strain_T']]*1e6
-
-       
         total_targets=out.values
         TEST_out.append(total_targets)
 
     inp['z'] = inp['z'] / 20
     inp['r'] = inp['r'] / 10
     TEST_out_com = np.concatenate(TEST_out)
-    maxs_test = TEST_out_com.max(axis=0)
-    mins_test = TEST_out_com.min(axis=0)
-
     TEST_out_scaled = (TEST_out_com-mins_train)/(maxs_train-mins_train)
-
-        # Original lengths of the arrays in TEST_out
     lengths = [arr.shape[0] for arr in TEST_out]
-
-    # Split the scaled array back into the original list structure
     TEST_out_scaled = split_array(TEST_out_scaled, lengths)
 
     return TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out, ZS_train, ZS_val, ZS_test,mins_train,maxs_train

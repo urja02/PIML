@@ -2,18 +2,14 @@
 import time
 from sklearn.metrics import mean_squared_error,mean_absolute_error,mean_absolute_percentage_error
 import torch
-import matplotlib.pyplot as plt
-import numpy as np
 from utils import setup_logging
-import logging
-import os
 import seaborn as sns
 import torch.nn as nn
 
 
 def training_loop(args, model, optimizer, batched_graph,batched_graph_val, batched_graph_test, lr, epochs,criterion, Section, ZS,xs,weighted_loss=None):
 
-  weight_dir, plot_dir, pred_dir = setup_logging(args)
+  weight_dir = setup_logging(args)
 
  
   device  = torch.device('cuda')
