@@ -1,101 +1,102 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import tqdm
-from torch.nn import Linear, ReLU
-from torch_geometric.nn import Sequential, GCNConv
-from torch_geometric.data import Data
-from torch_geometric.data import DataLoader, Batch
+import numpy as np
+from typing import List, Tuple
+from torch_geometric.data import Data, Batch
 
-def train_graph(TRAIN, TRAIN_out, MAT_edge, MAT_dist):
+def create_graph(inputs: np.ndarray, outputs: np.ndarray, edge_index: np.ndarray) -> Data:
+    """Create a single graph from input data, outputs and edge indices.
+    
+    Args:
+        inputs: Node features array
+        outputs: Target values array
+        edge_index: Edge indices array
+        
+    Returns:
+        Data: PyTorch Geometric graph data object
+    """
+    # Convert inputs to torch tensor and ensure float type
+    inputs = torch.from_numpy(inputs).float()
+    
+    # Convert edge index to torch tensor and transpose
+    edge_index = torch.tensor(edge_index, dtype=torch.long).t()
+    
+    # Create graph using PyTorch Geometric data structure
+    graph = Data(
+        x=inputs,  # Node features
+        edge_index=edge_index,  # Edge indices
+        y=torch.from_numpy(outputs).float()  # Target values
+    )
+    
+    return graph
+
+def create_batched_graph(data: List[np.ndarray], 
+                        outputs: List[np.ndarray], 
+                        edge_indices: List[np.ndarray]) -> Batch:
+    """Create a batched graph from lists of data.
+    
+    Args:
+        data: List of input arrays
+        outputs: List of output arrays
+        edge_indices: List of edge index arrays
+        
+    Returns:
+        Batch: Batched PyTorch Geometric graphs
+    """
     graphs = []
-
-    for i in range(len(TRAIN)):
-        inputs = TRAIN[i]  # Extract inputs for the i-th sample
-        outputs = TRAIN_out[i]  # Extract outputs for the i-th sample
-
-        # Assuming inputs contains the coordinates (x, z) for nodes
-        # Assuming outputs contains the target values
-        inputs=torch.from_numpy(inputs)
-        inputs = inputs.float()
-
-        targets=torch.from_numpy(outputs)
-        targets= targets.float()
-        # Example: Calculate edge indices for the i-th input
-        edge_index = MAT_edge[i]
-        edge_index=torch.tensor(edge_index)
-        edge_index = torch.t(edge_index)
-        edge_distance = MAT_dist[i]
-
-        # Create a graph using PyTorch Geometric data structure
-        # Constructing Data object
-        graph = Data(x=torch.tensor(inputs, dtype=torch.float),  # Node features
-                        edge_index=torch.tensor(edge_index, dtype=torch.long),  # Edge indices
-                        y=torch.tensor(outputs, dtype=torch.float))  # Target values
-
-        # Append the graph to the list
+    
+    for inputs, targets, edges in zip(data, outputs, edge_indices):
+        graph = create_graph(inputs, targets, edges)
         graphs.append(graph)
+        
+    return Batch.from_data_list(graphs)
 
-    batched_graph = Batch.from_data_list(graphs)
-    return batched_graph
+def train_graph(TRAIN: List[np.ndarray], 
+                TRAIN_out: List[np.ndarray], 
+                MAT_edge: List[np.ndarray], 
+                MAT_dist: List[np.ndarray]) -> Batch:
+    """Create batched graph for training data.
+    
+    Args:
+        TRAIN: List of training input arrays
+        TRAIN_out: List of training output arrays
+        MAT_edge: List of edge index arrays
+        MAT_dist: List of edge distance arrays (unused)
+        
+    Returns:
+        Batch: Batched training graphs
+    """
+    return create_batched_graph(TRAIN, TRAIN_out, MAT_edge)
 
-def val_graph(VAL, VAL_out, MAT_edge_val, MAT_dist_val):
-    graphs_val = []
+def val_graph(VAL: List[np.ndarray], 
+              VAL_out: List[np.ndarray], 
+              MAT_edge_val: List[np.ndarray], 
+              MAT_dist_val: List[np.ndarray]) -> Batch:
+    """Create batched graph for validation data.
+    
+    Args:
+        VAL: List of validation input arrays
+        VAL_out: List of validation output arrays
+        MAT_edge_val: List of edge index arrays
+        MAT_dist_val: List of edge distance arrays (unused)
+        
+    Returns:
+        Batch: Batched validation graphs
+    """
+    return create_batched_graph(VAL, VAL_out, MAT_edge_val)
 
-    for i in range(len(VAL)):
-        inputs = VAL[i]  # Extract inputs for the i-th sample
-        outputs = VAL_out[i]  # Extract outputs for the i-th sample
-
-        # Assuming inputs contains the coordinates (x, z) for nodes
-        # Assuming outputs contains the target values
-        inputs=torch.from_numpy(inputs)
-        inputs = inputs.float()
-
-        targets=torch.from_numpy(outputs)
-        targets= targets.float()
-        # Example: Calculate edge indices for the i-th input
-        edge_index = MAT_edge_val[i]
-        edge_index=torch.tensor(edge_index)
-        edge_index = torch.t(edge_index)
-        edge_distance = MAT_dist_val[i]
-
-        # Create a graph using PyTorch Geometric data structure
-        # Constructing Data object
-        graph = Data(x=torch.tensor(inputs, dtype=torch.float),  # Node features
-                        edge_index=torch.tensor(edge_index, dtype=torch.long),  # Edge indices
-                        y=torch.tensor(outputs, dtype=torch.float))  # Target values
-
-        # Append the graph to the list
-        graphs_val.append(graph)
-    batched_graph_val = Batch.from_data_list(graphs_val)
-    return batched_graph_val
-
-def test_graph(TEST, TEST_out, MAT_edge_test, MAT_dist_test):
-    graphs_test = []
-    for i in range(len(TEST)):
-        inputs = TEST[i]  # Extract inputs for the i-th sample
-        outputs = TEST_out[i]  # Extract outputs for the i-th sample
-
-        # Assuming inputs contains the coordinates (x, z) for nodes
-        # Assuming outputs contains the target values
-        inputs=torch.from_numpy(inputs)
-        inputs = inputs.float()
-
-        targets=torch.from_numpy(outputs)
-        targets= targets.float()
-        # Example: Calculate edge indices for the i-th input
-        edge_index = MAT_edge_test[i]
-        edge_index=torch.tensor(edge_index)
-        edge_index = torch.t(edge_index)
-        edge_distance = MAT_dist_test[i]
-
-        # Create a graph using PyTorch Geometric data structure
-        # Constructing Data object
-        graph = Data(x=torch.tensor(inputs, dtype=torch.float),  # Node features
-                        edge_index=torch.tensor(edge_index, dtype=torch.long),  # Edge indices
-                        y=torch.tensor(outputs, dtype=torch.float))  # Target values
-
-        # Append the graph to the list
-        graphs_test.append(graph)
-    batched_graph_test = Batch.from_data_list(graphs_test)
-    return batched_graph_test
+def test_graph(TEST: List[np.ndarray], 
+               TEST_out: List[np.ndarray], 
+               MAT_edge_test: List[np.ndarray], 
+               MAT_dist_test: List[np.ndarray]) -> Batch:
+    """Create batched graph for test data.
+    
+    Args:
+        TEST: List of test input arrays
+        TEST_out: List of test output arrays
+        MAT_edge_test: List of edge index arrays
+        MAT_dist_test: List of edge distance arrays (unused)
+        
+    Returns:
+        Batch: Batched test graphs
+    """
+    return create_batched_graph(TEST, TEST_out, MAT_edge_test)
