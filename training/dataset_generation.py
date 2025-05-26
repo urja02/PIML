@@ -1,4 +1,3 @@
-
 #Import packages necessary for analysis
 import sys
 import os
@@ -8,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from copy import deepcopy
-from LayeredElastic.Main.MLEV_Parallel import PyMastic
+from PIML.core.LayeredElastic.Main.MLEV_Parallel import PyMastic
 import pickle
 
 

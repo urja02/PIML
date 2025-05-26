@@ -6,14 +6,19 @@ import pandas as pd
 import pickle
 from typing import Tuple, List, Dict, Optional
 from pathlib import Path
-from dataset_generation import generatesection, plot_sample_query_points,generate_query_points,analysis
-from data_preprocessing import frame_filtering,  filtering_ZS, train_val_test_generate, formation_of_matrices,remove_strain_z
-from graphs_formation import train_graph, val_graph, test_graph
-from train_GNN import training_loop
-from model import GAT
-import logging
-from train_PNN import training_nn
-from train_FNN import training_FNN
+
+# Import from core LayeredElastic
+from PIML.core.LayeredElastic.Main.MDA_Huang import Layer3D
+from PIML.core.LayeredElastic.Main.MLEV_Parallel import PyMastic
+
+# Import from PIML package
+from PIML.training.dataset_generation import generatesection, plot_sample_query_points, generate_query_points, analysis
+from PIML.training.data_preprocessing import frame_filtering, filtering_ZS, train_val_test_generate, formation_of_matrices, remove_strain_z
+from PIML.training.graphs_formation import train_graph, val_graph, test_graph
+from PIML.training.train_GNN import training_loop
+from PIML.training.model import GAT
+from PIML.training.train_PNN import training_nn
+from PIML.training.train_FNN import training_FNN
 import numpy as np
 
 # Constants
@@ -66,10 +71,8 @@ def parse_arguments() -> argparse.Namespace:
                        help="Use neural network model")
     
     # Data arguments
-    parser.add_argument("--frame_large_path", type=str, required=True,
-                       help="Path to FrameLarge pickle file")
-    parser.add_argument("--section_path", type=str, required=True,
-                       help="Path to Section pickle file")
+    parser.add_argument("--data_path", type=str, required=True,
+                       help="Path to data directory where frame_large.pkl and section.pkl will be stored/loaded")
     
     # Model arguments
     parser.add_argument("--lr", type=float, required=True,
@@ -132,6 +135,13 @@ def load_or_generate_data(
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: FrameLarge and Section data
     """
+    # Create data directory if it doesn't exist
+    data_path = Path(args.data_path)
+    data_path.mkdir(parents=True, exist_ok=True)
+    
+    frame_path = data_path / "frame_large.pkl"
+    section_path = data_path / "section.pkl"
+    
     if args.run_analysis:
         Section, Frame = generatesection(
             config['N_POINTS'], config['N_MATERIALS'],
@@ -149,16 +159,16 @@ def load_or_generate_data(
             config['A_RANGE'], Frame
         )
         
-        analysis(args.frame_large_path, args.section_path, FrameLarge, Section)
+        analysis(str(frame_path), str(section_path), FrameLarge, Section)
         
-        with open(args.frame_large_path, 'rb') as fp:
+        with open(frame_path, 'rb') as fp:
             FrameLarge = pickle.load(fp)
-        with open(args.section_path, 'rb') as fp:
+        with open(section_path, 'rb') as fp:
             Section = pickle.load(fp)
     else:
-        with open(args.frame_large_path, 'rb') as fp:
+        with open(frame_path, 'rb') as fp:
             FrameLarge = pickle.load(fp)
-        with open(args.section_path, 'rb') as fp:
+        with open(section_path, 'rb') as fp:
             Section = pickle.load(fp)
             
     return FrameLarge, Section
@@ -172,27 +182,33 @@ def main(args: argparse.Namespace):
     # Load or generate data
     FrameLarge, Section = load_or_generate_data(args, {**MATERIAL_CONFIG, **SAMPLING_CONFIG})
     
-    # Generate temporary data for visualization
-    Section_temp, Frame = generatesection(
-        SAMPLING_CONFIG['N_POINTS'], MATERIAL_CONFIG['N_MATERIALS'],
-        MATERIAL_CONFIG['MATERIAL_TYPES'], MATERIAL_CONFIG['SUBLAYER_MAX'],
-        MATERIAL_CONFIG['THICKNESS_RANGE'], MATERIAL_CONFIG['MODULUS_RANGE'],
-        SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['X_POINTS'],
-        MATERIAL_CONFIG['THICKNESS_INCREMENT'], MATERIAL_CONFIG['MODULUS_INCREMENT'],
-        MATERIAL_CONFIG['NU_RANGE'], SAMPLING_CONFIG['A_RANGE'],
-        SAMPLING_CONFIG['A_POINTS'], seed=SAMPLING_CONFIG['SEED']
-    )
+    if args.run_analysis:
+        # Generate temporary data for visualization
+        Section_temp, Frame = generatesection(
+            SAMPLING_CONFIG['N_POINTS'], MATERIAL_CONFIG['N_MATERIALS'],
+            MATERIAL_CONFIG['MATERIAL_TYPES'], MATERIAL_CONFIG['SUBLAYER_MAX'],
+            MATERIAL_CONFIG['THICKNESS_RANGE'], MATERIAL_CONFIG['MODULUS_RANGE'],
+            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['X_POINTS'],
+            MATERIAL_CONFIG['THICKNESS_INCREMENT'], MATERIAL_CONFIG['MODULUS_INCREMENT'],
+            MATERIAL_CONFIG['NU_RANGE'], SAMPLING_CONFIG['A_RANGE'],
+            SAMPLING_CONFIG['A_POINTS'], seed=SAMPLING_CONFIG['SEED']
+        )
 
-    # Plot sample query points
-    plot_sample_query_points(Section_temp, SAMPLING_CONFIG['X_POINTS'],
-                           SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'])
-
-    # Generate query points
-    FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
-        Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
-        SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
-        SAMPLING_CONFIG['A_RANGE'], Frame
-    )
+        # Generate query points
+        FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
+            Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
+            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
+            SAMPLING_CONFIG['A_RANGE'], Frame
+        )
+        ZS, DF = remove_strain_z(FrameLarge)
+    else:
+        FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
+            Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
+            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
+            SAMPLING_CONFIG['A_RANGE'], Frame
+        )
+        # Just remove strain_z for training/evaluation
+        ZS, DF = remove_strain_z(FrameLarge)
 
     if args.model == "PNN":
         # Neural network training path
@@ -206,7 +222,6 @@ def main(args: argparse.Namespace):
     elif args.model == "FNN":
         # Feed-forward neural network training path
         # Split data using specific indices
-        ZS, DF = remove_strain_z(FrameLarge)
         x_train = DF.iloc[:135520, 3:13].values
         y_train = DF.iloc[:135520, 19:22].values
         x_val = DF.iloc[135520:152720, 3:13].values
@@ -228,8 +243,6 @@ def main(args: argparse.Namespace):
         # Strain prediction path
         train_df = FrameLarge.loc[FrameLarge['Structure'] <= SAMPLING_CONFIG['SPLIT_IDX']]
         train_df = train_df[['Strain_Z', 'Strain_R', 'Strain_T']]
-
-        ZS, DF = remove_strain_z(FrameLarge)
 
         # Generate train/val/test splits for GNN
         TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out, ZS_train, ZS_val, ZS_test, mins_train, maxs_train = train_val_test_generate(
@@ -257,6 +270,10 @@ def main(args: argparse.Namespace):
         batched_graph_val = val_graph(VAL, VAL_out, MAT_edge_val, MAT_dist_val)
         batched_graph_test = test_graph(TEST, TEST_out, MAT_edge_test, MAT_dist_test)
 
+        if args.run_analysis:
+            # Save graph structures as pkl files in data folder
+            with open(f'{args.data_path}/batched_graph.pkl', 'wb') as fp:
+                pickle.dump(batched_graph, fp)
         # Setup training
         optimizer = choose_optimizer(model, args.optimizer, args.lr)
         crit = get_criterion(args.criterion)
@@ -272,5 +289,4 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    main(args)
-
+    main(args) 

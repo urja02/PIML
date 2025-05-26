@@ -5,7 +5,7 @@ This project implements machine learning models for predicting strain and stress
 ## Table of Contents
 - [Installation](#installation)
 - [Project Structure](#project-structure)
-- [Data Preparation](#data-preparation)
+- [Dataset Generation](#dataset-generation)
 - [Training Models](#training-models)
   - [GNN Training](#gnn-training)
   - [FNN Training](#fnn-training)
@@ -37,79 +37,99 @@ pip install -e .
 ## Project Structure
 
 Key components of the codebase:
-- `main.py`: Entry point for training and evaluation
-- `train_GNN.py`: Graph Neural Network implementation
-- `train_FNN.py`: Feed-Forward Neural Network implementation
-- `train_PNN.py`: Physics-informed Neural Network implementation
-- `data_preprocessing.py`: Data filtering and preprocessing utilities
-- `dataset_generation.py`: Synthetic dataset generation
-- `graphs_formation.py`: Graph construction for GNN
-- `model.py`: Model architectures (GCN and GAT)
+- `core/`: Core functionality shared between training and evaluation
+  - `main.py`: Entry point for training, evaluation, and dataset generation
+  - `LayeredElastic/`: Layered elastic analysis components
+- `training/`: Training-specific components
+  - `train_GNN.py`: Graph Neural Network implementation
+  - `train_FNN.py`: Feed-Forward Neural Network implementation
+  - `train_PNN.py`: Physics-informed Neural Network implementation
+  - `data_preprocessing.py`: Data filtering and preprocessing utilities
+  - `dataset_generation.py`: Synthetic dataset generation
+  - `graphs_formation.py`: Graph construction for GNN
+  - `model.py`: Model architectures (GCN and GAT)
+- `data/`: Generated datasets and model inputs
 
-## Data Preparation
+## Dataset Access
 
-1. Download required datasets:
-   - [Frame Large Dataset](https://drive.google.com/file/d/1jdqzxtWYaD6kauOPkwVkGCuL7iV14o_8/view?usp=drive_link)
-   - [Section Dataset](https://drive.google.com/file/d/1A0mF4MpVF0N1zlPWxg8BFn4LPhnoTJnk/view?usp=drive_link)
+Pre-generated datasets are available at:
+[PIML Dataset Collection](https://drive.google.com/drive/folders/1HLT3-ctCmgP86KtTfzyJd_QPH4wtlzWh?usp=sharing)
 
-2. Place the downloaded datasets in `PIML/training/data/`
+Please download all the files to the data directory.
 
-3. Set up LayeredElastic dependency:
+## Dataset Generation
+
+To generate a new dataset for training or evaluation:
+
 ```bash
-cd PIML/training/
-git clone https://github.com/egemenokte/3DLayeredElastic.git LayeredElastic
+python PIML/core/main.py \
+  --run_analysis \
+  --data_path PIML/data \
+  --mode train \
+  --model GNN \
+  --lr 0.01 \
+  --epochs 1 \
+  --optimizer Adam \
+  --criterion L1loss \
+  --log_dir PIML/training/log
 ```
+
+The `--run_analysis` flag triggers the generation of:
+1. Frame and section pickle files in the specified data directory:
+   - `frame_large.pkl`: Contains material properties and responses
+   - `section.pkl`: Contains layer geometries and configurations
+2. Associated files needed for evaluation
+3. Query points and analysis results
+
+This process can take several hours depending on the number of samples and complexity of the analysis.
 
 ## Training Models
 
 ### GNN Training
 ```bash
-python main.py \
+python PIML/core/main.py \
   --mode train \
   --model GNN \
-  --frame_large_path training/data/frame_large.pkl \
-  --section_path training/data/section.pkl \
+  --data_path PIML/data \
   --lr 0.01 \
   --epochs 1000 \
   --optimizer Adam \
   --criterion L1loss \
-  --log_dir logs/gnn_training
+  --log_dir PIML/training/log
 ```
 
 ### FNN Training
 ```bash
-python main.py \
+python PIML/core/main.py \
   --mode train \
   --model FNN \
-  --frame_large_path training/data/frame_large.pkl \
-  --section_path training/data/section.pkl \
+  --data_path PIML/data \
   --lr 0.001 \
   --epochs 500 \
   --optimizer Adam \
   --criterion L1loss \
-  --log_dir logs/fnn_training
+  --log_dir PIML/training/log
 ```
 
 ### PNN Training
 ```bash
-python main.py \
+python PIML/core/main.py \
   --mode train \
   --model PNN \
-  --frame_large_path training/data/frame_large.pkl \
-  --section_path training/data/section.pkl \
+  --data_path PIML/data \
   --lr 0.001 \
   --epochs 500 \
   --optimizer Adam \
   --criterion L1loss \
-  --log_dir logs/pnn_training
+  --log_dir PIML/training/log
 ```
 
 ## Command Line Arguments
 
+- `--run_analysis`: Flag to generate new dataset and analysis files
 - `--mode`: Training or evaluation mode (`train` or `eval`)
 - `--model`: Model architecture (`GNN`, `FNN`, or `PNN`)
-- `--frame_large_path`: Path to frame_large dataset
-- `--section_path`: Path to section dataset
+- `--data_path`: Directory where frame_large.pkl and section.pkl will be stored/loaded
 - `--lr`: Learning rate
 - `--epochs`: Number of training epochs
 - `--optimizer`: Optimization algorithm (`Adam` supported)
@@ -126,10 +146,7 @@ The training data is structured as follows:
   - Validation: Samples 135,520 to 152,720
   - Testing: Samples 152,720 to 169,799
 
-## Dataset Access
 
-Complete dataset collection is available at:
-[PIML Dataset Collection](https://drive.google.com/drive/u/1/folders/1T2EYd7iKodO1UYzjE3eJXYsuqATpXhM-)
 
 ## Model Evaluation
 
