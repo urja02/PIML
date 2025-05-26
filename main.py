@@ -8,18 +8,19 @@ from typing import Tuple, List, Dict, Optional
 from pathlib import Path
 
 # Import from core LayeredElastic
-from PIML.core.LayeredElastic.Main.MDA_Huang import Layer3D
-from PIML.core.LayeredElastic.Main.MLEV_Parallel import PyMastic
+from LayeredElastic.Main.MDA_Huang import Layer3D
+from LayeredElastic.Main.MLEV_Parallel import PyMastic
 
-# Import from PIML package
-from PIML.training.dataset_generation import generatesection, plot_sample_query_points, generate_query_points, analysis
-from PIML.training.data_preprocessing import frame_filtering, filtering_ZS, train_val_test_generate, formation_of_matrices, remove_strain_z
-from PIML.training.graphs_formation import train_graph, val_graph, test_graph
-from PIML.training.train_GNN import training_loop
-from PIML.training.model import GAT
-from PIML.training.train_PNN import training_nn
-from PIML.training.train_FNN import training_FNN
+# Import from training package
+from training.dataset_generation import generatesection, plot_sample_query_points, generate_query_points, analysis
+from training.data_preprocessing import frame_filtering, filtering_ZS, train_val_test_generate, formation_of_matrices, remove_strain_z
+from training.graphs_formation import train_graph, val_graph, test_graph
+from training.train_GNN import training_loop
+from training.model import GAT
+from training.train_PNN import training_nn
+from training.train_FNN import training_FNN
 import numpy as np
+
 
 # Constants
 MATERIAL_CONFIG = {

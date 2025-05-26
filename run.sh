@@ -1,9 +1,9 @@
-python 'PIML/core/main.py' \
+python 'core/main.py' \
     --mode train \
     --model GNN \
-    --data_path PIML/data \
+    --data_path data \
     --lr 0.01 \
     --epochs 1 \
     --optimizer Adam \
     --criterion L1loss \
-    --log_dir PIML/training/log 
+    --log_dir training/log 

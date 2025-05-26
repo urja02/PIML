@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from copy import deepcopy
-from PIML.core.LayeredElastic.Main.MLEV_Parallel import PyMastic
+from LayeredElastic.Main.MLEV_Parallel import PyMastic
 import pickle
 
 
