@@ -94,3 +94,47 @@ class GAT(nn.Module):
         x = F.relu(x)
         
         return self.linear2(x)
+
+class FNNModel(nn.Module):
+    def __init__(self, input_size: int, l1_lambda: float = 1e-5):
+        super(FNNModel, self).__init__()
+        self.l1_lambda = l1_lambda
+        self.fc1 = nn.Linear(input_size, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, 64)
+        self.fc4 = nn.Linear(64, 64)
+        self.fc5 = nn.Linear(64, 3)
+        self.act = nn.ReLU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.act(self.fc1(x))
+        x = self.act(self.fc2(x))
+        x = self.act(self.fc3(x))
+        x = self.act(self.fc4(x))
+        x = self.fc5(x)
+        return x
+
+    def l1_regularization(self) -> torch.Tensor:
+        l1_norm = sum(p.abs().sum() for p in self.parameters())
+        return self.l1_lambda * l1_norm
+
+class NeuralNetwork(nn.Module):
+    """Simple feed-forward neural network implementation for PNN."""
+    def __init__(self):
+        super(NeuralNetwork, self).__init__()
+        input_size = 5
+        hidden_size = 90
+        output_size = 3
+        self.layers = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size)
+        )
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.layers(x)

@@ -16,12 +16,17 @@ from training.dataset_generation import generatesection, plot_sample_query_point
 from training.data_preprocessing import frame_filtering, filtering_ZS, train_val_test_generate, formation_of_matrices, remove_strain_z
 from training.graphs_formation import train_graph, val_graph, test_graph
 from training.train_GNN import training_loop
-from training.model import GAT
 from training.train_PNN import training_nn
 from training.train_FNN import training_FNN
 import numpy as np
+from sklearn.preprocessing import StandardScaler
+# Import model classes from PIML.model
+from PIML.model import GAT
 
-
+# Import from evaluation package
+from PIML.evaluation.eval_FNN import evaluate_FNN
+from PIML.evaluation.eval_PNN import evaluate_PNN
+from PIML.evaluation.eval_GNN import evaluate_GNN
 # Constants
 MATERIAL_CONFIG = {
     'N_MATERIALS': 3,
@@ -86,6 +91,8 @@ def parse_arguments() -> argparse.Namespace:
                        help="Loss function type")
     parser.add_argument("--log_dir", type=str, required=True,
                        help="Directory for saving logs")
+    parser.add_argument("--model_path", type=str, required=False,
+                       help="Path to the trained model file (required for eval mode)")
     
     return parser.parse_args()
 
@@ -180,6 +187,10 @@ def main(args: argparse.Namespace):
     Args:
         args: Command line arguments
     """
+    # Validate model_path for eval mode
+    if args.mode == "eval" and not args.model_path:
+        raise ValueError("--model_path must be provided when --mode is 'eval'.")
+
     # Load or generate data
     FrameLarge, Section = load_or_generate_data(args, {**MATERIAL_CONFIG, **SAMPLING_CONFIG})
     
@@ -202,6 +213,13 @@ def main(args: argparse.Namespace):
             SAMPLING_CONFIG['A_RANGE'], Frame
         )
         ZS, DF = remove_strain_z(FrameLarge)
+
+        # Save ZS, xs files as pkl files in data folder
+        with open(f'{args.data_path}/ZS.pkl', 'wb') as fp:
+            pickle.dump(ZS, fp)
+        with open(f'{args.data_path}/xs.pkl', 'wb') as fp:
+            pickle.dump(xs, fp)
+
     else:
         FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
             Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
@@ -218,10 +236,16 @@ def main(args: argparse.Namespace):
             SAMPLING_CONFIG['SPLIT_IDX'], SAMPLING_CONFIG['TEST_IDX'],
             SAMPLING_CONFIG['N_POINTS'], final_dict_ztoH, final_dict_ztonu
         )
-        training_nn(args, TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out)
+
+        if args.mode == "train":
+            training_nn(args, TRAIN, TRAIN_out, VAL, VAL_out)
+        elif args.mode == "eval":
+            ZS_path = f"{args.data_path}/ZS.pkl"
+            xs_path = f"{args.data_path}/xs.pkl"
+            batched_graph_test_path = f"{args.data_path}/batched_graph_test.pkl"
+            evaluate_PNN(args, TEST, TEST_out, ZS_path, xs_path, batched_graph_test_path)
 
     elif args.model == "FNN":
-        # Feed-forward neural network training path
         # Split data using specific indices
         x_train = DF.iloc[:135520, 3:13].values
         y_train = DF.iloc[:135520, 19:22].values
@@ -229,16 +253,33 @@ def main(args: argparse.Namespace):
         y_val = DF.iloc[135520:152720, 19:22].values
         x_test = DF.iloc[152720:169799, 3:13].values
         y_test = DF.iloc[152720:169799, 19:22].values
+
+        # Scale the data
+        scaler = StandardScaler()
+        scalery = StandardScaler()
         
-        # Convert to list format as expected by training_FNN
-        TRAIN = [x_train]
-        TRAIN_out = [y_train]
-        VAL = [x_val]
-        VAL_out = [y_val]
-        TEST = [x_test]
-        TEST_out = [y_test]
+        x_train = scaler.fit_transform(x_train)
+        x_val = scaler.transform(x_val)
+        x_test = scaler.transform(x_test)
+        y_train = scalery.fit_transform(y_train)
+        y_val = scalery.transform(y_val)
+        y_test = scalery.transform(y_test)
+    
+
+        if args.mode == "eval":
+            ZS_path = f"{args.data_path}/ZS.pkl"
+            xs_path = f"{args.data_path}/xs.pkl"
+            batched_graph_test_path = f"{args.data_path}/batched_graph_test.pkl"
+ 
+            evaluate_FNN(
+                ZS_path, xs_path, batched_graph_test_path,
+                x_test,y_test, args
+            )
+            return
         
-        training_FNN(args, TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out)
+        # Feed-forward neural network training path
+        elif args.mode == "train":
+            training_FNN(args, x_train, y_train, x_val, y_val)
 
     elif args.model == "GNN":
         # Strain prediction path
@@ -275,6 +316,14 @@ def main(args: argparse.Namespace):
             # Save graph structures as pkl files in data folder
             with open(f'{args.data_path}/batched_graph.pkl', 'wb') as fp:
                 pickle.dump(batched_graph, fp)
+
+        if args.mode == "eval":
+            ZS_path = f"{args.data_path}/ZS.pkl"
+            xs_path = f"{args.data_path}/xs.pkl"
+            batched_graph_test_path = f"{args.data_path}/batched_graph_test.pkl"
+            evaluate_GNN(args, batched_graph_test_path, model, ZS_path, xs_path)
+            return
+        
         # Setup training
         optimizer = choose_optimizer(model, args.optimizer, args.lr)
         crit = get_criterion(args.criterion)

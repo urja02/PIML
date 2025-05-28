@@ -7,7 +7,8 @@ from typing import Optional, Dict, Any, List
 from sklearn.metrics import mean_squared_error
 from torch_geometric.data import Batch
 from pathlib import Path
-from utils import setup_logging
+from .utils import setup_logging
+from PIML.model import GAT
 
 def compute_metrics(
     targets: torch.Tensor,

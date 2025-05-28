@@ -7,7 +7,7 @@ Created on Sat Jun  5 19:57:57 2021
 Multi dimensional analysis built on top of MLE. Experimental
 """
 import numpy as np
-from Main.MLEV2 import PyMastic
+from .MLEV2 import PyMastic
 def Layer3D(L,LPos,a,x,y,z,H,E,nu,it,ZRO=7*1e-22 ,isBD=[1,1],tolerance=10**-6,verbose=True):
 
     tolerance=tolerance/100

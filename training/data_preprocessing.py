@@ -179,7 +179,7 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
 
     return TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out, ZS_train, ZS_val, ZS_test,mins_train,maxs_train
 
-def formation_of_matrices(TRAIN,VAL, TEST, ZS_train,xs, ZS_val, ZS_test):
+def formation_of_matrices(TRAIN, VAL, TEST, ZS_train, xs, ZS_val, ZS_test):
     #COnsidering multiple inputs
     MAT_edge = []
     MAT_dist=[]

@@ -6,10 +6,11 @@ from sklearn.metrics import mean_squared_error,mean_absolute_error,mean_absolute
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import setup_logging
+from .utils import setup_logging
 import logging
 from typing import List, Tuple, Any, Optional
 from pathlib import Path
+from PIML.model import NeuralNetwork
 
 def denormalize_min_max(
     normalized_data: np.ndarray,
@@ -31,56 +32,12 @@ def denormalize_min_max(
     
     return (normalized_data * (max_val - min_val)) + min_val
 
-class NeuralNetwork(nn.Module):
-    """Simple feed-forward neural network implementation.
-    
-    This model uses multiple linear layers with ReLU activation
-    for predicting strain values.
-    """
-    
-    def __init__(self, input_size: int, hidden_size: int, output_size: int):
-        """Initialize the neural network.
-        
-        Args:
-            input_size: Number of input features
-            hidden_size: Number of neurons in hidden layers
-            output_size: Number of output features
-        """
-        super(NeuralNetwork, self).__init__()
-        
-        self.layers = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size)
-        )
-        
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the model.
-        
-        Args:
-            x: Input tensor
-            
-        Returns:
-            torch.Tensor: Output predictions
-        """
-        return self.layers(x)
-
 def training_nn(
     args: Any,
     inputs: List[np.ndarray],
     targets: List[np.ndarray],
     input_val: List[np.ndarray],
-    target_val: List[np.ndarray],
-    test: List[np.ndarray],
-    target_test: List[np.ndarray]
+    target_val: List[np.ndarray]
 ) -> None:
     """Train a neural network model.
     
@@ -94,19 +51,12 @@ def training_nn(
         inputs: List containing training input array
         targets: List containing training target array
         input_val: List containing validation input array
-        target_val: List containing validation target array
-        test: List containing test input array
-        target_test: List containing test target array
     """
     torch.manual_seed(42)  # For reproducibility
     
-    # Model parameters
-    input_size = 5  # Number of input features
-    hidden_size = 90  # Number of neurons in hidden layers
-    output_size = 3  # Number of output features
-    
+
     # Create model
-    model = NeuralNetwork(input_size, hidden_size, output_size)
+    model = NeuralNetwork()
     
     # Setup training
     weight_dir = setup_logging(args)
