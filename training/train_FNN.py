@@ -30,33 +30,31 @@ def training_FNN(
             - optimizer: Optimizer type
             - criterion: Loss function type
             - log_dir: Directory for saving logs
-        
     """
     torch.manual_seed(42)  # For reproducibility
     
-    # Convert to tensors
-    x_train_tensor = torch.tensor(x_train, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
-    x_val_tensor = torch.tensor(x_val, dtype=torch.float32)
-    y_val_tensor = torch.tensor(y_val, dtype=torch.float32)
-
     # Create model
-    input_size = x_train.shape[1]
+    input_size = x_train.shape[1]  # Get input size from data
     model = FNNModel(input_size)
     
     # Setup training
     weight_dir = setup_logging(args)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
-    x_train_tensor = x_train_tensor.to(device)
-    y_train_tensor = y_train_tensor.to(device)
-    x_val_tensor = x_val_tensor.to(device)
-    y_val_tensor = y_val_tensor.to(device)
 
+    # Convert to tensors and create dataloaders
     batch_size = 1024
-    train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
+    train_dataset = TensorDataset(
+        torch.tensor(x_train, dtype=torch.float32),
+        torch.tensor(y_train, dtype=torch.float32)
+    )
+    val_dataset = TensorDataset(
+        torch.tensor(x_val, dtype=torch.float32),
+        torch.tensor(y_val, dtype=torch.float32)
+    )
+    
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
     
     # Training setup
     if args.criterion == "L1loss":
@@ -79,34 +77,46 @@ def training_FNN(
     for epoch in range(args.epochs):
         # Training step
         model.train()
-        for batch_x,batch_y in train_loader:
-
+        epoch_train_losses = []
+        
+        for batch_x, batch_y in train_loader:
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
+            
             outputs = model(batch_x)
             loss = criterion(outputs, batch_y)
-        
-            # # Add L1 regularization
-            # l1_loss = model.l1_regularization()
-            # loss = loss + l1_loss
             
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            epoch_train_losses.append(loss.item())
         
-            train_losses.append(loss.item())
+        avg_train_loss = sum(epoch_train_losses) / len(epoch_train_losses)
+        train_losses.append(avg_train_loss)
         
         # Validation step
         model.eval()
+        epoch_val_losses = []
+        
         with torch.no_grad():
-            outputs_val = model(x_val_tensor)
-            loss_val = criterion(outputs_val, y_val_tensor)
-            val_losses.append(loss_val.item())
+            for batch_x, batch_y in val_loader:
+                batch_x = batch_x.to(device)
+                batch_y = batch_y.to(device)
+                
+                outputs = model(batch_x)
+                loss = criterion(outputs, batch_y)
+                epoch_val_losses.append(loss.item())
+        
+        avg_val_loss = sum(epoch_val_losses) / len(epoch_val_losses)
+        val_losses.append(avg_val_loss)
         
         # Log progress
         if (epoch == 0) or (epoch + 1) % 100 == 0:
             logging.info(
                 f'Epoch [{epoch + 1}/{args.epochs}], '
-                f'Train Loss: {loss.item():.4f}, '
-                f'Val Loss: {loss_val.item():.4f}'
+                f'Train Loss: {avg_train_loss:.4f}, '
+                f'Val Loss: {avg_val_loss:.4f}'
             )
             # Save model checkpoint
             torch.save(

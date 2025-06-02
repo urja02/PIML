@@ -7,4 +7,4 @@ python main.py \
     --optimizer Adam \
     --criterion L1loss \
     --log_dir training/log \
-    --model_path data/gnn_model.pth 
+    --model_path /home/ugiridharan_umass_edu/PROJECT/PIML/training/log/19/checkpoints/model_epoch_14699.pt

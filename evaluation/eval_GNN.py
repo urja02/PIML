@@ -5,7 +5,7 @@ import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-
+import numpy as np
 def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, test_struct=0, test_g_struct=0):
     # Strain_Z actual
     sns.set_theme(rc={'figure.figsize':(20,10)}, font_scale=3)
@@ -17,7 +17,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title(r'$\\epsilon_z$')
+    plt.title(r'$\epsilon_z$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -33,7 +33,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title(r'$\\epsilon_z$')
+    plt.title(r'$\epsilon_z$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -50,7 +50,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title(r'$\\epsilon_r$')
+    plt.title(r'$\epsilon_r$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -66,7 +66,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title(r'$\\epsilon_r$')
+    plt.title(r'$\epsilon_r$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -83,9 +83,9 @@ def plot_actual_vs_predicted_GNN(batched_graph_test, predicted_values, plot_dir=
         p1 = max(batched_graph_test.y[:, i].cpu().detach().numpy().max(), predicted_values[:, i].max())
         p2 = min(batched_graph_test.y[:, i].cpu().detach().numpy().min(), predicted_values[:, i].min())
         plt.plot([p2, p1], [p2, p1], color='black', linestyle='--')
-        plt.xlabel(f'Actual $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.ylabel(f'Predicted $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.title(f'Actual vs Predicted in $\\mu\\epsilon_{label}$', fontsize=12)
+        plt.xlabel(f'Actual $\mu\epsilon_{label}$', fontsize=12)
+        plt.ylabel(f'Predicted $\mu\epsilon_{label}$', fontsize=12)
+        plt.title(f'Actual vs Predicted in $\mu\epsilon_{label}$', fontsize=12)
         plt.tight_layout()
         if plot_dir:
             plt.savefig(os.path.join(plot_dir, f"actual_vs_pred_{label}.png"))

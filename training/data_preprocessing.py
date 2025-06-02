@@ -42,9 +42,7 @@ def filtering_ZS(ZS,xs,Frame_filtered):
     ZS_new=[ele/20 for ele in ZS_new]
     xs=[ele/10 for ele in xs]
     return ZS_new,xs
-"""total inputs and targets
 
-"""
 def split_array(array, lengths):
   
   return np.split(array, np.cumsum(lengths)[:-1])
@@ -62,6 +60,7 @@ def remove_strain_z(DF):
         # Check if any Strain_Z value is greater than 2000
         if (inp['Strain_Z'] >=1500).any():
             DF = DF[DF["Structure"] != structure]
+            print(struct)
             continue 
         z_val = filtered['z'].unique()
         ZS_new.append(z_val)
@@ -101,8 +100,6 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
             if z_val in final_dict_ztonu[struct]:
                 inp.loc[idx,"nu"]=final_dict_ztonu[struct][z_val]
 
-        inp['z'] = inp['z'] / 20
-        inp['r'] = inp['r'] / 10
         total_inputs = inp.values
         TRAIN.append(total_inputs)
         out = filtered[['Strain_Z','Strain_R','Strain_T']]*1e6
@@ -132,8 +129,8 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
             if z_val in final_dict_ztonu[struct]:
                 inp.loc[idx,"nu"]=final_dict_ztonu[struct][z_val]
             
-        inp['z'] = inp['z'] / 20
-        inp['r'] = inp['r'] / 10
+        # inp['z'] = inp['z'] / 20
+        # inp['r'] = inp['r'] / 10
         total_inputs = inp.values
         VAL.append(total_inputs)
 
@@ -170,8 +167,8 @@ def train_val_test_generate( DF,final_dict_ztoE, ZS_new, xs,split_idx, test_idx,
         total_targets=out.values
         TEST_out.append(total_targets)
 
-    inp['z'] = inp['z'] / 20
-    inp['r'] = inp['r'] / 10
+    # inp['z'] = inp['z'] / 20
+    # inp['r'] = inp['r'] / 10
     TEST_out_com = np.concatenate(TEST_out)
     TEST_out_scaled = (TEST_out_com-mins_train)/(maxs_train-mins_train)
     lengths = [arr.shape[0] for arr in TEST_out]

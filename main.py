@@ -31,8 +31,8 @@ from PIML.evaluation.eval_GNN import evaluate_GNN
 MATERIAL_CONFIG = {
     'N_MATERIALS': 3,
     'MATERIAL_TYPES': ['AC', 'B', 'SG'],  # AC, base, subbase, subgrade
-    'SUBLAYER_MAX': [2, 2, 1],  # each material's max sublayers, excluding subgrade
-    'THICKNESS_RANGE': [[2, 16], [4, 20]],  # thickness range in inches
+    'SUBLAYER_MAX': [1, 1, 1],  # each material's max sublayers, excluding subgrade
+    'THICKNESS_RANGE': [[2,16],[4,20]],  # thickness range in inches
     'MODULUS_RANGE': [[500, 2000], [50, 300], [5, 50]],  # modulus range in ksi
     'THICKNESS_INCREMENT': [1, 2, 4],
     'MODULUS_INCREMENT': [50, 20, 20, 5],  # increment in modulus sampling
@@ -193,46 +193,37 @@ def main(args: argparse.Namespace):
 
     # Load or generate data
     FrameLarge, Section = load_or_generate_data(args, {**MATERIAL_CONFIG, **SAMPLING_CONFIG})
+    # Generate temporary data for visualization
+    Section_temp, Frame = generatesection(
+        SAMPLING_CONFIG['N_POINTS'], MATERIAL_CONFIG['N_MATERIALS'],
+        MATERIAL_CONFIG['MATERIAL_TYPES'], MATERIAL_CONFIG['SUBLAYER_MAX'],
+        MATERIAL_CONFIG['THICKNESS_RANGE'], MATERIAL_CONFIG['MODULUS_RANGE'],
+        SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['X_POINTS'],
+        MATERIAL_CONFIG['THICKNESS_INCREMENT'], MATERIAL_CONFIG['MODULUS_INCREMENT'],
+        MATERIAL_CONFIG['NU_RANGE'], SAMPLING_CONFIG['A_RANGE'],
+        SAMPLING_CONFIG['A_POINTS'], seed=SAMPLING_CONFIG['SEED']
+    )
     
+
+    # Generate query points
+    FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
+        Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
+        SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
+        SAMPLING_CONFIG['A_RANGE'], Frame
+    )
+
+    ZS, DF = remove_strain_z(FrameLarge)
     if args.run_analysis:
-        # Generate temporary data for visualization
-        Section_temp, Frame = generatesection(
-            SAMPLING_CONFIG['N_POINTS'], MATERIAL_CONFIG['N_MATERIALS'],
-            MATERIAL_CONFIG['MATERIAL_TYPES'], MATERIAL_CONFIG['SUBLAYER_MAX'],
-            MATERIAL_CONFIG['THICKNESS_RANGE'], MATERIAL_CONFIG['MODULUS_RANGE'],
-            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['X_POINTS'],
-            MATERIAL_CONFIG['THICKNESS_INCREMENT'], MATERIAL_CONFIG['MODULUS_INCREMENT'],
-            MATERIAL_CONFIG['NU_RANGE'], SAMPLING_CONFIG['A_RANGE'],
-            SAMPLING_CONFIG['A_POINTS'], seed=SAMPLING_CONFIG['SEED']
-        )
-
-        # Generate query points
-        FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
-            Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
-            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
-            SAMPLING_CONFIG['A_RANGE'], Frame
-        )
-        ZS, DF = remove_strain_z(FrameLarge)
-
         # Save ZS, xs files as pkl files in data folder
         with open(f'{args.data_path}/ZS.pkl', 'wb') as fp:
             pickle.dump(ZS, fp)
         with open(f'{args.data_path}/xs.pkl', 'wb') as fp:
             pickle.dump(xs, fp)
 
-    else:
-        FrameLarge_temp, ZS, xs, E, NU, final_dict_ztoE, H, final_dict_ztoH, final_dict_ztonu = generate_query_points(
-            Section, SAMPLING_CONFIG['N_POINTS'], SAMPLING_CONFIG['X_POINTS'],
-            SAMPLING_CONFIG['Z_POINTS'], SAMPLING_CONFIG['FACTOR'],
-            SAMPLING_CONFIG['A_RANGE'], Frame
-        )
-        # Just remove strain_z for training/evaluation
-        ZS, DF = remove_strain_z(FrameLarge)
-
     if args.model == "PNN":
         # Neural network training path
         TRAIN, TRAIN_out, VAL, VAL_out, TEST, TEST_out, ZS_train, ZS_val, ZS_test, mins_train, maxs_train = train_val_test_generate(
-            FrameLarge, final_dict_ztoE, ZS, xs,
+            DF, final_dict_ztoE, ZS, xs,
             SAMPLING_CONFIG['SPLIT_IDX'], SAMPLING_CONFIG['TEST_IDX'],
             SAMPLING_CONFIG['N_POINTS'], final_dict_ztoH, final_dict_ztonu
         )
@@ -247,8 +238,8 @@ def main(args: argparse.Namespace):
 
     elif args.model == "FNN":
         # Split data using specific indices
-        x_train = DF.iloc[:135520, 3:13].values
-        y_train = DF.iloc[:135520, 19:22].values
+        x_train_og = DF.iloc[:135520, 3:13].values
+        y_train_og = DF.iloc[:135520, 19:22].values
         x_val = DF.iloc[135520:152720, 3:13].values
         y_val = DF.iloc[135520:152720, 19:22].values
         x_test = DF.iloc[152720:169799, 3:13].values
@@ -258,10 +249,10 @@ def main(args: argparse.Namespace):
         scaler = StandardScaler()
         scalery = StandardScaler()
         
-        x_train = scaler.fit_transform(x_train)
+        x_train = scaler.fit_transform(x_train_og)
         x_val = scaler.transform(x_val)
         x_test = scaler.transform(x_test)
-        y_train = scalery.fit_transform(y_train)
+        y_train = scalery.fit_transform(y_train_og)
         y_val = scalery.transform(y_val)
         y_test = scalery.transform(y_test)
     
@@ -273,7 +264,7 @@ def main(args: argparse.Namespace):
  
             evaluate_FNN(
                 ZS_path, xs_path, batched_graph_test_path,
-                x_test,y_test, args
+                x_test,y_test, y_train_og,args
             )
             return
         
@@ -292,6 +283,9 @@ def main(args: argparse.Namespace):
             SAMPLING_CONFIG['SPLIT_IDX'], SAMPLING_CONFIG['TEST_IDX'],
             SAMPLING_CONFIG['N_POINTS'], final_dict_ztoH, final_dict_ztonu
         )
+
+        print("Here")
+        print(TRAIN[0])
         
         # Generate matrices for graph formation
         MAT_edge, MAT_dist, MAT_edge_val, MAT_dist_val, MAT_edge_test, MAT_dist_test = formation_of_matrices(
@@ -306,7 +300,8 @@ def main(args: argparse.Namespace):
             MODEL_CONFIG['OUTPUT_DIM'],
             MODEL_CONFIG['NUM_LAYERS']
         )
-
+        print("This is it")
+        print(TRAIN[0])
         # Create graph structures
         batched_graph = train_graph(TRAIN, TRAIN_out, MAT_edge, MAT_dist)
         batched_graph_val = val_graph(VAL, VAL_out, MAT_edge_val, MAT_dist_val)

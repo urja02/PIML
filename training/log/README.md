@@ -1,0 +1,1 @@
+This is the log dir used in the shell scripts

@@ -7,4 +7,4 @@ python main.py \
     --optimizer Adam \
     --criterion MSE \
     --log_dir training/log \
-    --model_path data/fnn_model.pth 
+    --model_path /home/ugiridharan_umass_edu/PROJECT/PIML/training/log/17/checkpoints/model_epoch_1000.pt

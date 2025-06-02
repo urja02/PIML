@@ -21,9 +21,9 @@ def plot_actual_vs_predicted(final_y_plot, final_y_pred, plot_dir=None):
         p1 = max(final_y_plot[:, i].max(), final_y_pred[:, i].max())
         p2 = min(final_y_plot[:, i].min(), final_y_pred[:, i].min())
         plt.plot([p2, p1], [p2, p1], color='black', linestyle='--')
-        plt.xlabel(f'Actual $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.ylabel(f'Predicted $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.title(f'Actual vs Predicted in $\\mu\\epsilon_{label}$', fontsize=12)
+        plt.xlabel(f'Actual $\mu\epsilon_{label}$', fontsize=12)
+        plt.ylabel(f'Predicted $\mu\epsilon_{label}$', fontsize=12)
+        plt.title(f'Actual vs Predicted in $\mu\epsilon_{label}$', fontsize=12)
         plt.tick_params(axis='both', which='major', labelsize=12)
         plt.tight_layout()
         if plot_dir:
@@ -57,7 +57,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title('$\\epsilon_z$')
+    plt.title('$\epsilon_z$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -90,7 +90,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title('$\\epsilon_r$')
+    plt.title('$\epsilon_r$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -99,7 +99,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     plt.close()
 
 def evaluate_FNN(
-    ZS_path, xs_path, batched_graph_test_path, x_test, y_test,args
+    ZS_path, xs_path, batched_graph_test_path, x_test, y_test, y_train, args
 ):
     # Load the model
     input_size = x_test.shape[1]
@@ -112,6 +112,7 @@ def evaluate_FNN(
     test_outputs = model(test_inputs)
     predicted_values = test_outputs.detach().numpy()
     scalery = StandardScaler()
+    y_train=scalery.fit_transform(y_train)
     y_pred=scalery.inverse_transform(predicted_values)
     y_plot=scalery.inverse_transform(y_test)
     final_y_plot = y_plot*1e6
@@ -145,4 +146,4 @@ def evaluate_FNN(
     plot_actual_vs_predicted(final_y_plot, final_y_pred, plot_dir=plot_dir)
 
     # Plot heatmaps
-    plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=plot_dir, test_struct=test_struct, test_g_struct=test_g_struct)
+    plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=plot_dir)

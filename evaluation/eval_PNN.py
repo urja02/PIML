@@ -17,9 +17,9 @@ def plot_actual_vs_predicted_pnn(target_test, predicted_values, plot_dir=None):
         min_val = min(target_test[:, i].min(), predicted_values[:, i].min())
         max_val = max(target_test[:, i].max(), predicted_values[:, i].max())
         plt.plot([min_val, max_val], [min_val, max_val], color='black', linestyle='--')
-        plt.xlabel(f'Actual $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.ylabel(f'Predicted $\\mu\\epsilon_{label}$', fontsize=12)
-        plt.title(f'Actual vs Predicted in $\\mu\\epsilon_{label}$', fontsize=12)
+        plt.xlabel(f'Actual $\mu\epsilon_{label}$', fontsize=12)
+        plt.ylabel(f'Predicted $\mu\epsilon_{label}$', fontsize=12)
+        plt.title(f'Actual vs Predicted in $\mu\epsilon_{label}$', fontsize=12)
         plt.tick_params(axis='both', which='major', labelsize=12)
         plt.xlim(min_val, max_val)
         plt.ylim(min_val, max_val)
@@ -55,7 +55,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title('$\\epsilon_z$')
+    plt.title('$\epsilon_z$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -88,7 +88,7 @@ def plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=None, tes
     colorbar.ax.yaxis.label.set_size(30)
     plt.xlabel('x (cm)', fontsize=30)
     plt.ylabel('z (cm)', fontsize=30)
-    plt.title('$\\epsilon_r$')
+    plt.title('$\epsilon_r$')
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.tight_layout()
@@ -133,5 +133,5 @@ def evaluate_PNN(args, TEST, TEST_out, ZS_path, xs_path, batched_graph_test_path
     plot_actual_vs_predicted_pnn(target_test, predicted_values, plot_dir=plot_dir)
 
     # Plot heatmaps
-    plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=plot_dir, test_struct=test_struct, test_g_struct=test_g_struct)
+    plot_heatmaps(ZS_new, xs, batched_graph_test, pred_graph, plot_dir=plot_dir)
 

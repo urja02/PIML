@@ -35,7 +35,7 @@ class GAT(nn.Module):
             num_layers: Number of GAT layers
         """
         super(GAT, self).__init__()
-        torch.manual_seed(1234)  # For reproducibility
+        torch.manual_seed(42)  # For reproducibility
         
         # Helper functions to determine layer dimensions
         def get_in_channels(idx: int) -> int:
@@ -69,7 +69,7 @@ class GAT(nn.Module):
         
         # Final linear layers
         self.linear1 = nn.Linear(hidden_dim, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, output_dim)
+        self.linear = nn.Linear(hidden_dim, output_dim)
         
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model.
@@ -93,18 +93,23 @@ class GAT(nn.Module):
         x = self.linear1(x)  # Reusing linear1 as in original
         x = F.relu(x)
         
-        return self.linear2(x)
+        return self.linear(x)
 
 class FNNModel(nn.Module):
     def __init__(self, input_size: int, l1_lambda: float = 1e-5):
         super(FNNModel, self).__init__()
         self.l1_lambda = l1_lambda
+        
+        # Define layers with input_size parameter
         self.fc1 = nn.Linear(input_size, 64)
         self.fc2 = nn.Linear(64, 64)
         self.fc3 = nn.Linear(64, 64)
         self.fc4 = nn.Linear(64, 64)
-        self.fc5 = nn.Linear(64, 3)
+        self.fc5 = nn.Linear(64, 3)  # Output size is always 3 for strain predictions
         self.act = nn.ReLU()
+        
+        
+     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.act(self.fc1(x))
@@ -138,3 +143,32 @@ class NeuralNetwork(nn.Module):
         )
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.layers(x)
+
+# class NeuralNetwork(nn.Module):
+#     def __init__(self):
+#         super(NeuralNetwork, self).__init__()
+#         # Define the input size, hidden size, and output size
+#         input_size = 5  # Number of input features
+#         hidden_size =  90 # Number of neurons in the hidden layer
+#         output_size = 3 # Number of output features
+
+
+#         self.f1 = nn.Linear(input_size, hidden_size)
+#         self.relu = nn.ReLU()
+#         self.f2 = nn.Linear(hidden_size, hidden_size)
+#         self.f3 = nn.Linear(hidden_size, output_size)
+
+
+#     def forward(self, x):
+#         x = self.f1(x)
+#         x = self.relu(x)
+#         x = self.f2(x)
+#         x = self.relu(x)
+#         x =  self.f2(x)
+#         x= self.relu(x)
+#         x =  self.f2(x)
+#         x= self.relu(x)
+#         x = self.f3(x)
+
+#         return x
+
