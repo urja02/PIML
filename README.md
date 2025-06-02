@@ -10,6 +10,7 @@ This project implements machine learning models for predicting strain and stress
   - [GNN Training](#gnn-training)
   - [FNN Training](#fnn-training)
   - [PNN Training](#pnn-training)
+- [Model Evaluation](#model-evaluation)
 - [Dataset Access](#dataset-access)
 
 ## Installation
@@ -31,114 +32,121 @@ venv\Scripts\activate
 
 3. Install the required packages:
 ```bash
-pip install -e .
+pip install -r requirements.txt
 ```
 
 ## Project Structure
 
-Key components of the codebase:
-- `core/`: Core functionality shared between training and evaluation
-  - `main.py`: Entry point for training, evaluation, and dataset generation
-  - `LayeredElastic/`: Layered elastic analysis components
-- `training/`: Training-specific components
-  - `train_GNN.py`: Graph Neural Network implementation
-  - `train_FNN.py`: Feed-Forward Neural Network implementation
-  - `train_PNN.py`: Physics-informed Neural Network implementation
-  - `data_preprocessing.py`: Data filtering and preprocessing utilities
-  - `dataset_generation.py`: Synthetic dataset generation
-  - `graphs_formation.py`: Graph construction for GNN
-  - `model.py`: Model architectures (GCN and GAT)
-- `data/`: Generated datasets and model inputs
+The project is organized as follows:
 
-## Dataset Access
-
-Pre-generated datasets are available at:
-[PIML Dataset Collection](https://drive.google.com/drive/folders/1HLT3-ctCmgP86KtTfzyJd_QPH4wtlzWh?usp=sharing)
-
-Please download all the files to the data directory.
+```
+PIML/
+├── data/                  # Data storage directory
+├── evaluation/            # Evaluation scripts
+│   ├── eval_GNN.py       # GNN model evaluation
+│   ├── eval_FNN.py       # FNN model evaluation
+│   ├── eval_PNN.py       # PNN model evaluation
+│   └── utils.py          # Evaluation utilities
+├── training/             # Training implementations
+│   ├── train_GNN.py      # GNN training implementation
+│   ├── train_FNN.py      # FNN training implementation
+│   ├── train_PNN.py      # PNN training implementation
+│   ├── data_preprocessing.py  # Data preprocessing utilities
+│   ├── dataset_generation.py  # Dataset generation scripts
+│   ├── graphs_formation.py    # Graph construction for GNN
+│   └── utils.py          # Training utilities
+├── LayeredElastic/       # Layered elastic analysis components
+├── plots/                # Directory for generated plots
+├── main.py              # Main entry point
+├── model.py             # Model architectures
+├── requirements.txt     # Project dependencies
+└── run scripts/         # Various execution scripts
+    ├── run_dataset_generation.sh
+    ├── run_train_*.sh   # Training scripts for each model
+    └── run_eval_*.sh    # Evaluation scripts for each model
+```
 
 ## Dataset Generation
 
-To generate a new dataset for training or evaluation:
+To generate a new dataset, use the provided script:
 
 ```bash
-python PIML/core/main.py \
+./run_dataset_generation.sh
+```
+
+Or run directly with Python:
+
+```bash
+python main.py \
   --run_analysis \
-  --data_path PIML/data \
+  --data_path data \
   --mode train \
   --model GNN \
   --lr 0.01 \
   --epochs 1 \
   --optimizer Adam \
   --criterion L1loss \
-  --log_dir PIML/training/log
+  --log_dir training/log
 ```
-
-The `--run_analysis` flag triggers the generation of:
-1. Frame and section pickle files in the specified data directory:
-   - `frame_large.pkl`: Contains material properties and responses
-   - `section.pkl`: Contains layer geometries and configurations
-2. Associated files needed for evaluation
-3. Query points and analysis results
-
-This process can take several hours depending on the number of samples and complexity of the analysis.
 
 ## Training Models
 
 ### GNN Training
 ```bash
-python PIML/core/main.py \
-  --mode train \
-  --model GNN \
-  --data_path PIML/data \
-  --lr 0.01 \
-  --epochs 1000 \
-  --optimizer Adam \
-  --criterion L1loss \
-  --log_dir PIML/training/log
+./run_train_gnn.sh
 ```
 
 ### FNN Training
 ```bash
-python PIML/core/main.py \
-  --mode train \
-  --model FNN \
-  --data_path PIML/data \
-  --lr 0.001 \
-  --epochs 500 \
-  --optimizer Adam \
-  --criterion L1loss \
-  --log_dir PIML/training/log
+./run_train_fnn.sh
 ```
 
 ### PNN Training
 ```bash
-python PIML/core/main.py \
-  --mode train \
-  --model PNN \
-  --data_path PIML/data \
-  --lr 0.001 \
-  --epochs 500 \
-  --optimizer Adam \
-  --criterion L1loss \
-  --log_dir PIML/training/log
+./run_train_pnn.sh
 ```
 
-## Command Line Arguments
-
-- `--run_analysis`: Flag to generate new dataset and analysis files
-- `--mode`: Training or evaluation mode (`train` or `eval`)
+Each training script can be configured through command line arguments:
+- `--mode`: Training mode (`train` or `eval`)
 - `--model`: Model architecture (`GNN`, `FNN`, or `PNN`)
-- `--data_path`: Directory where frame_large.pkl and section.pkl will be stored/loaded
+- `--data_path`: Data directory path
 - `--lr`: Learning rate
 - `--epochs`: Number of training epochs
-- `--optimizer`: Optimization algorithm (`Adam` supported)
-- `--criterion`: Loss function (`L1loss` or `MSE`)
-- `--log_dir`: Directory for saving logs and checkpoints
+- `--optimizer`: Optimization algorithm
+- `--criterion`: Loss function
+- `--log_dir`: Log directory path
+
+## Model Evaluation
+
+To evaluate trained models:
+
+```bash
+# For GNN evaluation
+./run_eval_gnn.sh
+
+# For FNN evaluation
+./run_eval_fnn.sh
+
+# For PNN evaluation
+./run_eval_pnn.sh
+```
+
+The evaluation scripts provide:
+- Model performance metrics
+- Prediction accuracy analysis
+- Visualization of results
+- Comparison with ground truth
+
+## Dataset Access
+
+Pre-generated datasets are available at:
+[PIML Dataset Collection](https://drive.google.com/drive/folders/1HLT3-ctCmgP86KtTfzyJd_QPH4wtlzWh?usp=sharing)
+
+Download the datasets to the `data/` directory before running training or evaluation.
 
 ## Data Structure
 
-The training data is structured as follows:
+The training data includes:
 - Features (columns 3-13): Material properties and geometry
 - Targets (columns 19-22): Strain components
 - Data splits:
@@ -146,18 +154,6 @@ The training data is structured as follows:
   - Validation: Samples 135,520 to 152,720
   - Testing: Samples 152,720 to 169,799
 
-
-
-## Model Evaluation
-
-For detailed model evaluation and analysis:
-1. Use the provided Jupyter notebooks in the repository
-2. Check the log directory specified during training for:
-   - Training/validation loss curves
-   - Model checkpoints
-   - Performance metrics
-
 ## Citation
 
-If you use this code in your research, please cite:
-[Add citation information when available]
+
