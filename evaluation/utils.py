@@ -23,7 +23,7 @@ def build_pred_graph(batched_graph_test, final_y_pred):
 
 def setup_plotting():
     # get unique number of experiment
-    plot_root = "plots"
+    plot_root = "evaluation/plots"
     if os.path.exists(plot_root):
         avail_nums = os.listdir(plot_root)
         avail_nums = [-1] + [int(d) for d in avail_nums if d.isdigit()]
