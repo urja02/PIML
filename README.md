@@ -1,4 +1,4 @@
-# Physics-Informed Machine Learning (PIML) for Layered Material Analysis from study Graph Attention Networks for Mechanistic Pavement Analysis: A Physics-Informed Machine Learning Approach
+# Physics-Informed Machine Learning (PIML) for Layered Material Analysis from study Physics-Informed Graph Attention Networks for Scalable Pavement Response Prediction
 
 This project implements machine learning models for predicting strain and stress in layered materials. It supports multiple model architectures including Graph Neural Networks (GNN), Feed-Forward Neural Networks (FNN), and Partial-information Neural Networks (PNN).
 
