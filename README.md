@@ -193,9 +193,9 @@ Before running the evaluation notebooks, ensure you have the following files in 
 
 Direct links to run the notebooks in Google Colab:
 
-- [GAT Evaluation Notebook](https://colab.research.google.com/github/urja02/PIML/blob/main/evaluation/GAT_evaluation.ipynb)
-- [FNN Evaluation Notebook](https://drive.google.com/file/d/1QXBGDEgXzHIziuW4fRaxW_6mYaMjno6p/view?usp=drive_link)
-- [PNN Evaluation Notebook](https://colab.research.google.com/drive/1GD9zqO5qQtStgfwHyRx4cbITLApQMmcv?usp=drive_link)
+- [GAT Evaluation Notebook](https://drive.google.com/file/d/10saPc9CCgUQKcwbZI48skvNzpGtCDzhP/view?usp=drive_link)
+- [FNN Evaluation Notebook](https://drive.google.com/file/d/1oC8zod5hF99XyhuNLeRfJuzDzTFH64qp/view?usp=drive_link)
+- [PNN Evaluation Notebook](https://drive.google.com/file/d/1H9nk7k8qtoOcrV7E7NQfH1qxglG4p1Lz/view?usp=drive_link)
 
 **Note:** Make sure to upload the required data files to your Google Drive before running the notebooks.
 
