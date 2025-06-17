@@ -55,7 +55,7 @@ Key components of the codebase:
 ## Dataset Access
 
 Pre-generated datasets are available at:
-[PIML Dataset Collection](https://drive.google.com/drive/folders/1HLT3-ctCmgP86KtTfzyJd_QPH4wtlzWh?usp=sharing)
+[PIML Dataset Collection](https://drive.google.com/drive/folders/1a5rX6QH7Jtz-rTIS2OjW1ZKAM2ux_RQF?usp=drive_link)
 
 Please download all the files to the data directory.
 
